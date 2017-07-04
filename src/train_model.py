@@ -13,7 +13,6 @@ import argparse
 import csv
 
 import numpy
-
 from keras.layers import Lambda
 from keras.layers import Dense
 from keras.layers import Dropout
@@ -24,10 +23,7 @@ from keras.models import Model
 from keras.callbacks import ModelCheckpoint
 from keras.utils import np_utils
 
-
-def get_slice(X):
-    """Method to slice out last layer of an LSTM"""
-    return X[:, -1, :]
+from model_functions import define_model
 
 
 if __name__ == '__main__':
@@ -87,46 +83,7 @@ if __name__ == '__main__':
     # one hot encode the output variable
     y = np_utils.to_categorical(dataY)
 
-    # Create Graves Net https://arxiv.org/pdf/1308.0850.pdf figure 1 using Keras function api
-    # Create the input layers we have a main
-    main_input = Input(shape=(seq_length, 1), name='main_input')
-
-    # Create the first LSTM layer based on the input alone
-    lstm_1 = LSTM(args.n_hidden, return_sequences=True)(main_input)
-
-    # Create a slice layer to pass output of lstm to the dense layer
-    slice_1 = Lambda(get_slice)(lstm_1)
-    drop_slice_1 = Dropout(args.dropout)(slice_1)
-
-    # Joing first layer and input into second layer and pass this to a new lstm
-    layer_1 = layers_concatenate([lstm_1, main_input])
-    lstm_2 = LSTM(args.n_hidden, return_sequences=True)(layer_1)
-
-    # Create a slice layer to pass output of lstm to the dense layer
-    slice_2 = Lambda(get_slice)(lstm_2)
-    drop_slice_2 = Dropout(args.dropout)(slice_2)
-
-    # Join the second layer and input into a third layer
-    layer_2 = layers_concatenate([lstm_2, main_input])
-    lstm_3 = LSTM(args.n_hidden, return_sequences=True)(layer_2)
-    drop_3 = Dropout(args.dropout)(lstm_3)
-    slice_3 = Lambda(get_slice)(lstm_3)
-    drop_slice_3 = Dropout(args.dropout)(slice_3)
-
-    # Join the third layer and input into a fourth layer
-    layer_3 = layers_concatenate([lstm_3, main_input])
-    lstm_4 = LSTM(args.n_hidden)(layer_3)
-    drop_4 = Dropout(args.dropout)(lstm_4)
-
-    # And finally we add the main softmax layer based on all LSTM Layers
-    output_layer = layers_concatenate([drop_slice_1, drop_slice_2, drop_slice_3, drop_4])
-    main_output = Dense(y.shape[1], activation='softmax', name='main_output')(output_layer)
-
-    # Define inputs and outputs of model
-    model = Model(inputs=[main_input], outputs=[main_output])
-
-    # Compile the final model
-    model.compile(optimizer='adam', loss='categorical_crossentropy', clipvalues=1)
+    model = define_model(y.shape[1], seq_length, args.n_hidden, args.dropout)
 
     # Define the check points
     model_to_save = args.model_name + "-{epoch:02d}-{loss:.4f}.hdf5"
