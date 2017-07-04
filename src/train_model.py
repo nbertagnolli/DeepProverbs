@@ -13,13 +13,6 @@ import argparse
 import csv
 
 import numpy
-from keras.layers import Lambda
-from keras.layers import Dense
-from keras.layers import Dropout
-from keras.layers import LSTM
-from keras.layers import Input
-from keras.layers import concatenate as layers_concatenate
-from keras.models import Model
 from keras.callbacks import ModelCheckpoint
 from keras.utils import np_utils
 
@@ -78,7 +71,7 @@ if __name__ == '__main__':
     X = numpy.reshape(dataX, (n_patterns, seq_length, 1))
 
     # normalize
-    X /= float(n_vocab)
+    X = X / float(n_vocab)
 
     # one hot encode the output variable
     y = np_utils.to_categorical(dataY)
