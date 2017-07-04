@@ -10,6 +10,7 @@ python3 train_model.py --file_path /path/to/file/filename --model_name my_model 
 """
 
 import argparse
+import csv
 
 import numpy
 
@@ -40,6 +41,14 @@ if __name__ == '__main__':
     parser.add_argument('--epochs',  type=int, default=40, help='The number of epochs to train for')
     parser.add_argument('--batch_size',  type=int, default=128, help='The batch size to use for training')
     args = parser.parse_args()
+
+    # Create model spec file this file holds all values used for this run
+    with open('{path}{file_name}_spec.csv'.format(path=args.file_path, file_name=args.model_name), 'w') as csv_file:
+        field_names = ['argument', 'value']
+        writer = csv.DictWriter(csv_file, fieldnames=field_names)
+        writer.writeheader()
+        for arg, val in vars(args).items():
+            writer.writerow({'argument': arg, 'value': val})
 
     # Load in Raw Text
     text = open(args.file_path).read().lower()
