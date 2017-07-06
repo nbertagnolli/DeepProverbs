@@ -18,23 +18,45 @@ from keras.utils import np_utils
 from model_functions import get_slice, define_model
 
 
-def sample(preds, temperature = 1.0):
-        preds = np.log(preds) / temperature
-        dist = np.exp(preds) / np.sum(np.exp(preds))
-        # Floating point stability errors for multinomial see https://github.com/numpy/numpy/issues/8317
-        # return np.argmax(np.random.multinomial(1, preds, 1))
-        choices = range(len(preds))
-        return np.random.choice(choices, p=dist)
+def sample(preds, temperature=1.0):
+    # type: (np.ndarray, float) -> np.ndarray
+    """
+
+    :param preds:
+    :param temperature:
+    :return:
+    """
+    preds = np.log(preds) / temperature
+    dist = np.exp(preds) / np.sum(np.exp(preds))
+    # Floating point stability errors for multinomial see https://github.com/numpy/numpy/issues/8317
+    # return np.argmax(np.random.multinomial(1, preds, 1))
+    choices = range(len(preds))
+    return np.random.choice(choices, p=dist)
 
 
-def generate_text(model, data, num_chars=1000, seed=None, temperature=1.0):
+def generate_text(model, data, char_to_int, int_to_char, n_vocab, num_chars=1000, seed=None, temperature=1.0):
+    # type: (keras.model.Model, np.ndarray, Dict[str, int], Dict[int, str], int, int, str, float) -> None
+    """
+
+    :param model:
+    :param data:
+    :param char_to_int:
+    :param int_to_char:
+    :param n_vocab:
+    :param num_chars:
+    :param seed:
+    :param temperature:
+    :return:
+    """
+    generated_text = ''
     if not seed:
         start = np.random.randint(0, len(data)-1)
         pattern = data[start]
     else:
         pattern = [char_to_int[value] for value in seed]
     print("Seed:")
-    print("\"", ''.join([int_to_char[value] for value in pattern]), "\"")
+    generated_text = ''.join([int_to_char[value] for value in pattern])
+    print("\"", generated_text, "\"")
     # generate characters
     for i in range(num_chars):
         x = np.reshape(pattern, (1, len(pattern), 1))
@@ -43,25 +65,23 @@ def generate_text(model, data, num_chars=1000, seed=None, temperature=1.0):
         index = sample(prediction[0])
         result = int_to_char[index]
         seq_in = [int_to_char[value] for value in pattern]
-        sys.stdout.write(result)
+        # sys.stdout.write(result)
         pattern.append(index)
         pattern = pattern[1:len(pattern)]
+        generated_text += result
     print("\nDone.")
+    return generated_text
 
 
-if __name__ == '__main__':
-    # Parse arguments
-    parser = argparse.ArgumentParser(description='Trains a character level RNN on the specified text')
-    parser.add_argument('--model_path', type=str, help='The path to model file')
-    parser.add_argument('--model_spec',  type=str, help='The path to the model spec file')
-    parser.add_argument('--n_chars',  type=int, default=100, help='The number of characters to generate')
-    args = parser.parse_args()
+def main(model_path, spec_dict, num_chars_to_generate):
+    # type: (str, Dict[str, Any], int) -> None
+    """
 
-    # Parse the spec file and extract model parameters
-    with open(args.model_spec, mode='rU') as infile:
-        reader = csv.reader(infile)
-        spec_dict = {rows[0]: rows[1] for rows in reader}
-
+    :param model_path:
+    :param spec_dict:
+    :param num_chars_to_generate:
+    :return:
+    """
     # Load in Raw Text
     text = open(spec_dict['file_path']).read().lower()
 
@@ -103,7 +123,26 @@ if __name__ == '__main__':
     model = define_model(y.shape[1], seq_length, int(spec_dict['n_hidden']), float(spec_dict['dropout']))
 
     # Load earlier weights
-    model.load_weights(args.model_path)
+    model.load_weights(model_path)
 
     # Generate the text
-    generate_text(model, dataX, num_chars=args.n_chars)
+    generated_text = generate_text(model, dataX, char_to_int, int_to_char, n_vocab, num_chars=num_chars_to_generate)
+
+    return generated_text
+
+
+if __name__ == '__main__':
+    # Parse arguments
+    parser = argparse.ArgumentParser(description='Trains a character level RNN on the specified text')
+    parser.add_argument('--model_path', type=str, help='The path to model file')
+    parser.add_argument('--model_spec',  type=str, help='The path to the model spec file')
+    parser.add_argument('--n_chars',  type=int, default=100, help='The number of characters to generate')
+    args = parser.parse_args()
+
+    # Parse the spec file and extract model parameters
+    with open(args.model_spec, mode='rU') as infile:
+        reader = csv.reader(infile)
+        spec_dict = {rows[0]: rows[1] for rows in reader}
+
+    generated_text = main(args.model_path, spec_dict, args.n_chars)
+    print(generated_text)
