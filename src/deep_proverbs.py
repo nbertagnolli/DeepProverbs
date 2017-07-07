@@ -1,12 +1,73 @@
 from __future__ import print_function
 
 import csv
+
+import enchant
+import numpy as np
 import tweepy
 
 from generate_text import main
 
 
+def check_spelling(phrases, dictionary='en_US'):
+    # type: (List[str], str) -> List[Tuple[str, int]]
+    """This method takes in a list of phrases and returns a tuple where the first element is the spell corrected phrase
+    and the second element is the number of misspellings in that phrase according to dictionary.
+
+    Args:
+        phrases: A list of strings that are the phrases we want to spell check
+        dictionary: A string describing one of enchants dictionaries
+
+    Returns:
+        checked_phrases: A List of Tuples where each phrase has been spell checked and corrected, and is associated with
+            the number of misspellings present in that phrase.
+    """
+
+    # Create a holder for our list of phrase, number of misspelling Tuples
+    checked_phrases = []
+
+    # Define the spelling dictionary
+    d = enchant.Dict(dictionary)
+
+    # Step through all phrases and count the number of misspellings along side correcting them
+    for phrase in phrases:
+        checked_phrases.append(
+            reduce(lambda x, y: (x[0] + ' ' + y[0], x[1] + y[1]),
+                   map(lambda x: (x, 0) if d.check(x) else (d.suggest(x)[0], 1), phrase.split(' ')))
+        )
+
+    return checked_phrases
+
+
+def sample_phrase_on_spelling(checked_phrases):
+    # type: (List[Tuple[str, int]]) -> str
+    """This method takes a spell corrected list and returns a single phrase sampled from that list, where the sampling
+    rate has been adjusted by the number of misspellings.  The more misspellings there are the less likely that phrase
+    will be chosen
+
+    Args:
+        checked_phrases: A list of tuples generated from check_spelling.
+
+    Returns:
+        A phrase string sampled based on the number of misspellings.
+    """
+
+    # Unzip the phrases and their misspelling counts
+    phrases, n_misspellings = zip(*checked_phrases)
+
+    # Calculate the inverse of 1 + the count of misspellings.  This will be used to assign a probability that the phrase
+    # should be sampled.  We want phrases that are good, following the assumption that those phrases which have fewer
+    # misspellings are probably better phrases.
+    inverse_count = map(lambda x: 1 / (x + 1.0), n_misspellings)
+    probability_list = inverse_count / np.sum(inverse_count)
+    return np.random.choice(phrases, 1, p=probability_list)
+
+
+
 if __name__ == "__main__":
+
+    model_spec_path = '../models/proverbs_spec.csv'
+    model_path = '../models/proverbs-39-0.0943.hdf5'
 
     # Parse the credentials for the twitter bot
     with open('../twitter.cred', mode='rU') as infile:
@@ -23,12 +84,12 @@ if __name__ == "__main__":
     api = tweepy.API(auth)
 
     # Parse the spec file and extract model parameters
-    with open('../models/proverbs_spec.csv', mode='rU') as infile:
+    with open(model_spec_path, mode='rU') as infile:
         reader = csv.reader(infile)
         spec_dict = {rows[0]: rows[1] for rows in reader}
 
     # Randomly generate 1000 character text segment
-    generated_text = main('../models/proverbs-39-0.0943.hdf5', spec_dict, 3000)
+    generated_text = main(model_path, spec_dict, 3000)
 
     # Parse out all "sentences" by splitting on '.'
     split_text = generated_text.split('.')
@@ -50,7 +111,8 @@ if __name__ == "__main__":
 
     # TODO:: Look for parse consistency
 
-    tweet = valid_proverbs[0]  # TODO:: DO A RANDOM SAMPLE
+    tweet = sample_phrase_on_spelling(check_spelling(valid_proverbs))
 
+    print(tweet)
     # Update twitter status
     api.update_status(tweet)
