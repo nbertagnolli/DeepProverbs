@@ -64,7 +64,7 @@ def sample_phrase_on_spelling(checked_phrases, smoothing=2):
     # have fewer misspellings are probably better phrases.
     inverse_count = map(lambda x: 1.0 / (x + smoothing), n_misspellings)
     probability_list = inverse_count / np.sum(inverse_count)
-    return np.random.choice(phrases, 1, p=probability_list)
+    return np.random.choice(phrases, 1, p=probability_list)[0]
 
 
 
