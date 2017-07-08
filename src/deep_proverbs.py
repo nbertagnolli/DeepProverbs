@@ -33,32 +33,36 @@ def check_spelling(phrases, dictionary='en_US'):
     for phrase in phrases:
         checked_phrases.append(
             reduce(lambda x, y: (x[0] + ' ' + y[0], x[1] + y[1]),
-                   map(lambda x: (x, 0) if d.check(x) else (d.suggest(x)[0], 1), phrase.split(' ')))
+                   map(lambda x: (x, 0) if not x or d.check(x) else (d.suggest(x)[0].lower(), 1), phrase.split(' ')))
         )
 
     return checked_phrases
 
 
-def sample_phrase_on_spelling(checked_phrases):
-    # type: (List[Tuple[str, int]]) -> str
+def sample_phrase_on_spelling(checked_phrases, smoothing=2):
+    # type: (List[Tuple[str, int]], int) -> str
     """This method takes a spell corrected list and returns a single phrase sampled from that list, where the sampling
     rate has been adjusted by the number of misspellings.  The more misspellings there are the less likely that phrase
     will be chosen
 
     Args:
         checked_phrases: A list of tuples generated from check_spelling.
+        smoothing: An integer the determines how much weight to ascribe to misspellings it must be greater than 0
 
     Returns:
         A phrase string sampled based on the number of misspellings.
     """
 
+    if smoothing <= 0:
+        raise 'ERROR:: Smoothing must be greater than 0'
+
     # Unzip the phrases and their misspelling counts
     phrases, n_misspellings = zip(*checked_phrases)
 
-    # Calculate the inverse of 1 + the count of misspellings.  This will be used to assign a probability that the phrase
-    # should be sampled.  We want phrases that are good, following the assumption that those phrases which have fewer
-    # misspellings are probably better phrases.
-    inverse_count = map(lambda x: 1 / (x + 1.0), n_misspellings)
+    # Calculate the inverse of smoothing + the count of misspellings.  This will be used to assign a probability that
+    # the phrase should be sampled.  We want phrases that are good, following the assumption that those phrases which
+    # have fewer misspellings are probably better phrases.
+    inverse_count = map(lambda x: 1.0 / (x + smoothing), n_misspellings)
     probability_list = inverse_count / np.sum(inverse_count)
     return np.random.choice(phrases, 1, p=probability_list)
 
@@ -106,8 +110,6 @@ if __name__ == "__main__":
             valid_proverbs.append(proverb)
 
     print(valid_proverbs)
-
-    # TODO:: Spell check using pyenchant to both check misspellings and suggest words
 
     # TODO:: Look for parse consistency
 
