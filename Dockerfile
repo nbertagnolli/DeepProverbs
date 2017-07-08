@@ -13,7 +13,8 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     git \
     libhdf5-dev \
-    graphviz
+    graphviz \
+    libenchant1c2a
 
 # Install Python and necessary libraries
 RUN apt-get -y update && apt-get -y install \
@@ -30,7 +31,9 @@ RUN pip install --upgrade pip && \
     pip install pydot-ng && \
     pip install graphviz && \
     pip install tensorflow && \
-    pip install keras
+    pip install keras && \
+    pip install pyenchant && \
+    pip install tweepy
 
 CMD /bin/bash
 
