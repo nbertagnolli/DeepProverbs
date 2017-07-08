@@ -8,6 +8,27 @@ by Alex Graves.  This model differs from that paper in a few ways, most noteably
 of 7 and dropout was applied at each layer. This project relies on TensorFlow, Keras, numpy, tweepy, and enchant so if
 you want to run it make sure that you have those libraries installed.  Docker image coming soon : ).
 
+# Using Docker
+
+If you'd like to run the project but don't want to install everything feel free to use the provided Docker file to build
+an environment capable of running this project.  It is important to note that this Dockerfile does not support the GPU
+so if you want to run big models you should probably not use this Dockerfile.  To build the Docker image from the shell
+run:
+
+`docker build -t tensorflow-cpu .`
+
+This will take a little while but when it's finished running to check that the image was created type:
+
+`docker images`
+
+This will list out all of the Docker images that you have on your system make sure tensorflow-cpu is there.  Now to run
+the Docker image type:
+
+`docker run -v ~:/usr/home -it tensorflow-cpu`
+
+This will mount your home directory to /usr/home in the container and open an interactive terminal. Now inside of of the
+container just navigate to this repository and run the scripts.
+
 # Running the project.
 This project takes in raw text files and trains a character level model.  To start I would recommend running my
 clean_text.py script to remove unnecessary characters and numbers by putting the following command in the shell:
@@ -21,7 +42,7 @@ running:
 --dropout .4  --epochs 40 --batch_size 128`
 
 This will train a model with a 100 character context window, 650 units in each hidden layer, and 40% dropout for 40
-epochs with a batch size of 128.  It will save of the model state every time it finishes an epoch.
+epochs with a batch size of 128.  It will save off the model state every time it finishes an epoch.
 
 Once you've trained a model you can start generating text by running:
 

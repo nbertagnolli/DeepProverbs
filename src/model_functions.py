@@ -68,6 +68,6 @@ def define_model(output_size, seq_length, n_hidden, dropout):
     model = Model(inputs=[main_input], outputs=[main_output])
 
     # Compile the final model
-    model.compile(optimizer='adam', loss='categorical_crossentropy', clipvalues=1)
+    model.compile(optimizer='adam', loss='categorical_crossentropy')
 
     return model
