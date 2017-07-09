@@ -109,7 +109,9 @@ if __name__ == "__main__":
         if proverb not in original_text and len(proverb) <= 140:
             valid_proverbs.append(proverb)
 
+    # Print the original proverbs and their correctly spelled counter parts
     print(valid_proverbs)
+    print(check_spelling(valid_proverbs))
 
     # TODO:: Look for parse consistency
 
