@@ -1,0 +1,1 @@
+argument,valuedropout,0.4batch_size,128file_path,/Users/tetracycline/repos/NN/RNN/Sequence_Generation/DeepProverbs/Data/proverbs_clean.txtepochs,40context_size,75model_name,proverbsn_hidden,650

@@ -1,0 +1,1 @@
+argument,valuedropout,0.4batch_size,128file_path,../Data/havamal_clean.txtepochs,40context_size,75model_name,havamaln_hidden,650
