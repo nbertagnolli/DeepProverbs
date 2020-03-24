@@ -1,0 +1,19 @@
+# Command Line Options for the tweet command
+CHECKPOINT_DIR = "checkpoint" # defaults
+TWITER_CREDS = "twiter.json"
+
+# DOCKER TASKS
+# Build the container
+build: ## Build the container
+	docker build -t deep-proverbs -f Dockerfile .
+
+run: ## Run the container
+	docker run --rm -v $(shell pwd):$(shell pwd) -it deep-proverbs:latest
+
+run-jupyter: ## Run the container
+	docker run --rm -v $(shell pwd):$(shell pwd) -it -p 8989:8989 deep-proverbs:latest /bin/sh -c 'cd $(shell pwd); jupyter notebook --allow-root --no-browser --port=8989 --ip=0.0.0.0;'
+
+tweet:
+	docker run --rm -v $(shell pwd):$(shell pwd) -it deep-proverbs:latest  /bin/sh -c 'cd $(shell pwd); python3 deepproverbs.py post-tweet $(CHECKPOINT_DIR) $(TWITER_CREDS);'
+
+
