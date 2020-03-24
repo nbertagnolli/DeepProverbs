@@ -15,6 +15,7 @@ import gpt_2_simple as gpt2
 import numpy as np
 import tweepy
 
+
 @click.group()
 def main():
     pass
@@ -55,10 +56,10 @@ def finetune(
         steps=num_steps,
         sample_length=sample_length,
         save_every=save_every,
-        checkpoint_dir=checkpoint_dir
+        checkpoint_dir=checkpoint_dir,
     )  # steps is max number of training steps
 
-    gpt2.generate(sess)
+    gpt2.generate(sess, checkpoint_dir=checkpoint_dir)
 
 
 @main.command("generate")
@@ -95,7 +96,7 @@ def generate_text(
     temperature: float,
     destination_path: str,
     prefix: Optional[str],
-    return_as_list: bool = False
+    return_as_list: bool = False,
 ) -> List[str]:
     sess = gpt2.start_tf_sess()
     gpt2.load_gpt2(sess, checkpoint_dir=checkpoint_dir)
@@ -106,24 +107,28 @@ def generate_text(
         temperature=temperature,
         destination_path=destination_path,
         prefix=prefix,
-        return_as_list=return_as_list
+        return_as_list=return_as_list,
     )
     return text
 
 
-
-
-
-def tweet(checkpoint_dir: str, twitter_credential_path: str, length: int=1024, temperature: float=0.8, prefix: Optional[str]=None, delimiter: str="\n—————\n"):
+def tweet(
+    checkpoint_dir: str,
+    twitter_credential_path: str,
+    length: int = 1024,
+    temperature: float = 0.8,
+    prefix: Optional[str] = None,
+    delimiter: str = "\n==========\n",
+):
     # Parse the credentials for the twitter bot
     with open(twitter_credential_path, "r") as json_file:
         twitter_creds = json.load(json_file)
 
     # Set the credentials based on the credentials file
-    CONSUMER_KEY = twitter_creds['consumer_key']
-    CONSUMER_SECRET = twitter_creds['consumer_secret']
-    ACCESS_KEY = twitter_creds['access_key']
-    ACCESS_SECRET = twitter_creds['access_secret']
+    CONSUMER_KEY = twitter_creds["consumer_key"]
+    CONSUMER_SECRET = twitter_creds["consumer_secret"]
+    ACCESS_KEY = twitter_creds["access_key"]
+    ACCESS_SECRET = twitter_creds["access_secret"]
 
     # Authenticate with the Twitter API
     auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
@@ -131,7 +136,9 @@ def tweet(checkpoint_dir: str, twitter_credential_path: str, length: int=1024, t
     api = tweepy.API(auth)
 
     # Generate some text
-    generated_text = generate_text(checkpoint_dir, length, temperature, None, prefix, return_as_list=True)
+    generated_text = generate_text(
+        checkpoint_dir, length, temperature, None, prefix, return_as_list=True
+    )
 
     split_text = generated_text[0].split(delimiter)
 
