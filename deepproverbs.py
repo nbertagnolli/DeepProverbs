@@ -120,6 +120,7 @@ def tweet(
     prefix: Optional[str] = None,
     delimiter: str = "\n==========\n",
 ):
+    print(os.getcwd())
     # Parse the credentials for the twitter bot
     with open(twitter_credential_path, "r") as json_file:
         twitter_creds = json.load(json_file)

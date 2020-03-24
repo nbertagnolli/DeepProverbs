@@ -1,6 +1,6 @@
 # Command Line Options for the tweet command
 CHECKPOINT_DIR = "checkpoint" # defaults
-TWITER_CREDS = "twiter.json"
+TWITTER_CREDS = "twitter.json"
 
 # DOCKER TASKS
 # Build the container
